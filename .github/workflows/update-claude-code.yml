@@ -25,7 +25,7 @@ jobs:
           URL=$(echo "$META" | jq -r ".versions[\"$VERSION\"].dist.tarball")
           FILE="claude-code.tgz"
           curl -sL "$URL" -o "$FILE"
-          SHA256=$(nix hash file --type sha256 --base32 "$FILE")
+          SHA256=$(nix --extra-experimental-features nix-command hash file --type sha256 --base32 "$FILE")
 
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "URL=$URL" >> $GITHUB_OUTPUT
