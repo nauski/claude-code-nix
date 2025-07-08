@@ -33,9 +33,9 @@ jobs:
 
       - name: Update Nix expression
         run: |
-          sed -i "s|version = \".*\";|version = \"${{ steps.fetch.outputs.VERSION }}\";|" claude-code.nix
-          sed -i "s|url = \".*\";|url = \"${{ steps.fetch.outputs.URL }}\";|" claude-code.nix
-          sed -i "s|sha256 = \".*\";|sha256 = \"${{ steps.fetch.outputs.SHA256 }}\";|" claude-code.nix
+          sed -i "s|version = \".*\";|version = \"${{ steps.fetch.outputs.VERSION }}\";|" package.nix
+          sed -i "s|url = \".*\";|url = \"${{ steps.fetch.outputs.URL }}\";|" package.nix
+          sed -i "s|sha256 = \".*\";|sha256 = \"${{ steps.fetch.outputs.SHA256 }}\";|" package.nix
 
       - name: Commit and push changes
         uses: EndBug/add-and-commit@v9
