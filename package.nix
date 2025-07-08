@@ -38,18 +38,19 @@ stdenv.mkDerivation {
   ];
   
   buildPhase = ''
-    mkdir -p $out/lib/node_modules
-    cp -r . $out/lib/node_modules/@anthropic-ai/claude-code
+  mkdir -p $out/lib/node_modules/@anthropic-ai
 
-    mkdir -p $out/bin
-    cat > $out/bin/claude <<EOF
-    #!${bash}/bin/bash
-    NODE_PATH="$out/lib/node_modules" exec ${nodejs_22}/bin/node \
-      --no-warnings --enable-source-maps \
-      "$out/lib/node_modules/@anthropic-ai/claude-code/cli.js" "\$@"
-    EOF
-    chmod +x $out/bin/claude
+  # npm tarballs unpack into a 'package/' subdirectory
+  cp -r package $out/lib/node_modules/@anthropic-ai/claude-code
 
+  mkdir -p $out/bin
+  cat > $out/bin/claude <<EOF
+  #!${bash}/bin/bash
+  NODE_PATH="$out/lib/node_modules" exec ${nodejs_22}/bin/node \
+    --no-warnings --enable-source-maps \
+    "$out/lib/node_modules/@anthropic-ai/claude-code/cli.js" "\$@"
+  EOF
+  chmod +x $out/bin/claude
   '';
 
   meta = with lib; {
