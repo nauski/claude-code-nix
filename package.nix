@@ -41,7 +41,7 @@ stdenv.mkDerivation {
   mkdir -p $out/lib/node_modules/@anthropic-ai
 
   # npm tarballs unpack into a 'package/' subdirectory
-  cp -r package $out/lib/node_modules/@anthropic-ai/claude-code
+  cp -r . $out/lib/node_modules/@anthropic-ai/claude-code
 
   mkdir -p $out/bin
   cat > $out/bin/claude <<EOF
