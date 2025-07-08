@@ -40,6 +40,6 @@ jobs:
       - name: Commit and push changes
         uses: EndBug/add-and-commit@v9
         with:
-          add: 'claude-code.nix'
+          add: 'package.nix'
           message: "chore: update Claude Code to ${{ steps.fetch.outputs.VERSION }}"
 
