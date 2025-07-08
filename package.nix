@@ -17,7 +17,7 @@
 
 stdenv.mkDerivation rec {
   pname = "claude-code";
-  version = "1.0.43";  # Update this to install a newer version
+  version ? = "";  # Update this to install a newer version (Example: 1.0.44)
 
   # Don't try to unpack a source tarball - we'll download via npm
   dontUnpack = true;
@@ -47,9 +47,13 @@ stdenv.mkDerivation rec {
     ${nodejs_22}/bin/npm config set fetch-retry-mintimeout 20000
     ${nodejs_22}/bin/npm config set fetch-retry-maxtimeout 120000
     
+    versionSuffix=""
+    if [ -n "${version}" ]; then
+      versionSuffix="@${version}"
+    fi
     # Install claude-code from npm registry
     # --prefix=$out installs it to our output directory
-    ${nodejs_22}/bin/npm install -g --prefix=$out @anthropic-ai/claude-code@${version}
+    ${nodejs_22}/bin/npm install -g --prefix=$out @anthropic-ai/claude-code$versionSuffix
   '';
 
   installPhase = ''
