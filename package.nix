@@ -17,10 +17,10 @@
 }:
 
 let
-  version = "2.0.47"; # will be updated automatically
+  version = "2.0.49"; # will be updated automatically
   src = fetchurl {
-    url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-2.0.47.tgz";
-    sha256 = "0m8dajqg0l7djh5hv7in2a2hmgi3zc0cxb6i2nxjbg24k3vqm0vb"; # will be updated
+    url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-2.0.49.tgz";
+    sha256 = "0yln600sqz9iyvgwlxnnnpfb0n30b7v3a008n3aps4jz8k6hy1w6"; # will be updated
   };
 in
 
