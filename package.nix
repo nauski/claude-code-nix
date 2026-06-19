@@ -1,15 +1,25 @@
 # Claude Code Package
 #
 # Claude Code v2.x ships as a Bun-compiled native binary. The binary has the
-# JS bundle appended to the ELF, so we must NOT modify the binary itself
-# (autoPatchelfHook breaks Bun's standalone detection).
+# JS bundle appended to the ELF after the last section, so heavyweight ELF
+# rewriting (autoPatchelfHook: rpath rewrite + strip + section shuffling)
+# corrupts Bun's appended-payload detection and must be avoided.
 #
-# Instead, we invoke it through the Nix glibc dynamic linker via a wrapper.
+# A *surgical* `patchelf --set-interpreter` (changing only PT_INTERP to the Nix
+# glibc loader) leaves the appended payload untouched and is verified safe, so
+# we run the binary natively instead of through a loader-exec wrapper.
+#
+# Running natively matters: the binary's bundled ripgrep/find/grep helpers and
+# Claude's shell integration re-invoke `process.execPath` (= /proc/self/exe).
+# A loader-exec wrapper (or nix-ld, which execve's the real loader) makes that
+# path the dynamic linker, so the re-invocation runs the loader as `ugrep -G …`
+# and dies with "-G: error while loading shared libraries". Patching the
+# interpreter keeps /proc/self/exe pointed at the binary, so re-dispatch works.
 
 { lib
 , stdenv
 , glibc
-, bash
+, patchelf
 , fetchurl
 }:
 
@@ -50,18 +60,27 @@ stdenv.mkDerivation {
 
   src = nativeSrc;
 
+  # Skip the default fixup phase: stripping and automatic ELF rewriting would
+  # corrupt the Bun payload appended to the binary. We do the one safe edit
+  # (set-interpreter) by hand below.
   dontFixup = true;
+
+  nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [ patchelf ];
 
   installPhase =
     if stdenv.hostPlatform.isLinux then ''
-      mkdir -p $out/lib $out/bin
-      cp claude $out/lib/claude
-      chmod +x $out/lib/claude
+      mkdir -p $out/bin
+      cp claude $out/bin/claude
+      chmod +w $out/bin/claude
 
-      cat > $out/bin/claude <<EOF
-      #!${bash}/bin/bash
-      exec ${glibc}/lib/${if stdenv.hostPlatform.isx86_64 then "ld-linux-x86-64.so.2" else "ld-linux-aarch64.so.1"} --library-path ${glibc}/lib $out/lib/claude "\$@"
-      EOF
+      # Point only PT_INTERP at the Nix glibc loader; leave everything else
+      # (including the appended Bun payload) byte-for-byte intact. All NEEDED
+      # libs are plain glibc and resolve via the loader's default search path,
+      # so no RPATH is required.
+      patchelf --set-interpreter \
+        ${glibc}/lib/${if stdenv.hostPlatform.isx86_64 then "ld-linux-x86-64.so.2" else "ld-linux-aarch64.so.1"} \
+        $out/bin/claude
+
       chmod +x $out/bin/claude
     '' else ''
       mkdir -p $out/bin
