@@ -16,30 +16,35 @@ jobs:
       - name: Install tools
         run: sudo apt-get update && sudo apt-get install -y jq nix
 
-      - name: Fetch latest Claude Code version and tarball
+      - name: Fetch latest Claude Code version and native binary hashes
         id: fetch
         run: |
           PACKAGE="@anthropic-ai/claude-code"
           META=$(curl -s "https://registry.npmjs.org/${PACKAGE}")
           VERSION=$(echo "$META" | jq -r '.["dist-tags"].latest')
-          URL=$(echo "$META" | jq -r ".versions[\"$VERSION\"].dist.tarball")
-          FILE="claude-code.tgz"
-          curl -sL "$URL" -o "$FILE"
-          SHA256=$(nix --extra-experimental-features nix-command hash file --type sha256 --base32 "$FILE")
 
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "URL=$URL" >> $GITHUB_OUTPUT
-          echo "SHA256=$SHA256" >> $GITHUB_OUTPUT
+
+          for PLATFORM in linux-x64 linux-arm64 darwin-x64 darwin-arm64; do
+            URL="https://registry.npmjs.org/${PACKAGE}-${PLATFORM}/-/claude-code-${PLATFORM}-${VERSION}.tgz"
+            FILE=$(mktemp)
+            curl -sL "$URL" -o "$FILE"
+            SHA256=$(nix --extra-experimental-features nix-command hash file --type sha256 --base32 "$FILE")
+            VARNAME=$(echo "$PLATFORM" | tr '-' '_')
+            echo "SHA256_${VARNAME}=$SHA256" >> $GITHUB_OUTPUT
+            rm "$FILE"
+          done
 
       - name: Update Nix expression
         run: |
           sed -i "s|version = \".*\";|version = \"${{ steps.fetch.outputs.VERSION }}\";|" package.nix
-          sed -i "s|url = \".*\";|url = \"${{ steps.fetch.outputs.URL }}\";|" package.nix
-          sed -i "s|sha256 = \".*\";|sha256 = \"${{ steps.fetch.outputs.SHA256 }}\";|" package.nix
+          sed -i '/"x86_64-linux"/,/};/{s|sha256 = ".*";|sha256 = "${{ steps.fetch.outputs.SHA256_linux_x64 }}";|}' package.nix
+          sed -i '/"aarch64-linux"/,/};/{s|sha256 = ".*";|sha256 = "${{ steps.fetch.outputs.SHA256_linux_arm64 }}";|}' package.nix
+          sed -i '/"x86_64-darwin"/,/};/{s|sha256 = ".*";|sha256 = "${{ steps.fetch.outputs.SHA256_darwin_x64 }}";|}' package.nix
+          sed -i '/"aarch64-darwin"/,/};/{s|sha256 = ".*";|sha256 = "${{ steps.fetch.outputs.SHA256_darwin_arm64 }}";|}' package.nix
 
       - name: Commit and push changes
         uses: EndBug/add-and-commit@v9
         with:
           add: 'package.nix'
           message: "chore: update Claude Code to ${{ steps.fetch.outputs.VERSION }}"
-
