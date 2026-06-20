@@ -33,15 +33,15 @@ let
     };
     "aarch64-linux" = {
       platform = "linux-arm64";
-      sha256 = "0000000000000000000000000000000000000000000000000000";
+      sha256 = "0c6j6hhqbg7a7hnap2lgr8i1flvhqmky73j9hpjpjl9mp7k399wx";
     };
     "x86_64-darwin" = {
       platform = "darwin-x64";
-      sha256 = "0000000000000000000000000000000000000000000000000000";
+      sha256 = "1iikw9n61ckyq3mzlb2cg26gm13idkzf4ydi5yhzxghd187kr0ll";
     };
     "aarch64-darwin" = {
       platform = "darwin-arm64";
-      sha256 = "0000000000000000000000000000000000000000000000000000";
+      sha256 = "0l8iqrx468fpvxrkv6r2xazqg0885yrmywm94cp0jc235bakp1qb";
     };
   };
 
